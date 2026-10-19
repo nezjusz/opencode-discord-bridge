@@ -1,0 +1,9 @@
+{
+  "token": "",
+  "guildID": "",
+  "channelIDs": [],
+  "idleText": "for OpenCode requests",
+  "workingText": "thinking…",
+  "timeoutMs": 120000,
+  "includeAuthor": true
+}

@@ -1,0 +1,32 @@
+{
+  "name": "opencode-discord-bridge",
+  "version": "0.1.0",
+  "description": "OpenCode plugin that bridges a Discord server: message the bot in configured channels, get OpenCode's final text answer, with live model status",
+  "type": "module",
+  "license": "MIT",
+  "author": "nezjusz",
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "discord",
+    "discord-bridge",
+    "bot",
+    "ai"
+  ],
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nezjusz/opencode-discord-bridge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nezjusz/opencode-discord-bridge/issues"
+  }
+}

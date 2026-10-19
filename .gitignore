@@ -1,0 +1,11 @@
+# real live config (contains the Discord token — never commit it)
+.opencode/discord.json
+discord.json
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+node_modules/
