@@ -1,31 +1,18 @@
 /**
- * opencode-discord-bridge — bridges OpenCode with a Discord server.
+ * opencode-discord — bridges OpenCode with a Discord server.
  *
- * This is the source for an OpenCode plugin. It is intentionally dependency-free:
- * it talks to Discord's Gateway + REST APIs directly using the platform's
- * built-in WebSocket and fetch.
+ * The bot listens to messages in a set of channel IDs for one server (guild),
+ * forwards each message into a persistent OpenCode session, and replies to
+ * Discord with ONLY the assistant's final text output — reasoning, tool calls,
+ * and other internal parts are filtered out. The bot's Discord status always
+ * shows OpenCode's current default model (e.g. "Claude Sonnet 4.6 · thinking…")
+ * while working, and back to "online" + an idle status when done.
  *
- * Features:
- *   - listens for messages in a set of channel IDs for one server (guild ID)
- *   - forwards each message into a persistent OpenCode session (one session
- *     per Discord channel — conversation context is remembered)
- *   - labels prompts with the Discord author (e.g. "@alice: fix the tests"),
- *     so shared channel sessions know who said what
- *   - replies to Discord with ONLY the assistant's final text output —
- *     reasoning, tool calls, and other internal parts are filtered out
- *   - replies are threaded to the triggering Discord message
- *   - the bot's Discord status always shows OpenCode's current default model
- *     (e.g. "Claude Sonnet 4.6 · thinking…") while working, and an idle status
- *     when the request queue drains
- *   - survives disconnects (heartbeat + resume with sequence replay, deduped
- *     events), honors Discord rate limits, and auto-interrupts sessions that
- *     exceed a timeout
- *
- * Configuration (see README):
- *   - token: DISCORD_BOT_TOKEN env var, `token` in plugin options,
+ * Configuration:
+ *   - Bot token: DISCORD_BOT_TOKEN env var, `token` in ctx.options,
  *     or `token` in `.opencode/discord.json`
  *   - guildID / channelIDs / idleText / workingText / timeoutMs /
- *     includeAuthor: `.opencode/discord.json` or plugin options
+ *     includeAuthor: `.opencode/discord.json` or `ctx.options`
  *
  * Discord setup:
  *   1. Create an application + bot at https://discord.com/developers/applications,
@@ -103,13 +90,24 @@ export default {
   id: "discord",
   async setup(ctx: Any) {
     const root: string = ctx?.location?.directory ?? process.cwd()
-    const log = (message: string) => console.error(`[opencode-discord] ${message}`)
+
+    // the background service discards stderr, so keep a dedicated log file too
+    const fs = await import("node:fs")
+    const path = await import("node:path")
+    const logPath = path.join(root, ".opencode", "discord.log")
+    const log = (message: string) => {
+      const line = `[${new Date().toISOString()}] [opencode-discord] ${message}`
+      console.error(line)
+      try {
+        fs.appendFileSync(logPath, line + "\n")
+      } catch {
+        /* file logging is best-effort */
+      }
+    }
 
     // --- configuration -----------------------------------------------------
     let fileConfig: Partial<DiscordConfig> = {}
     try {
-      const fs = await import("node:fs")
-      const path = await import("node:path")
       const configPath = path.join(root, ".opencode", "discord.json")
       if (fs.existsSync(configPath)) {
         fileConfig = JSON.parse(fs.readFileSync(configPath, "utf8"))
@@ -434,7 +432,7 @@ export default {
         state.ready = false
         if (state.shutdown) return
         if (closeEvent.code === 4004) {
-          log("Discord rejected the token (4004). Not reconnecting.")
+          log("Discord rejected the token (401/4004). Not reconnecting.")
           return
         }
         scheduleReconnect()

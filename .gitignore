@@ -2,6 +2,10 @@
 .opencode/discord.json
 discord.json
 
+# plugin diagnostics log
+.opencode/discord.log
+discord.log
+
 # OS / editor noise
 .DS_Store
 Thumbs.db
